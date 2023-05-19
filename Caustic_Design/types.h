@@ -2,13 +2,12 @@
 #define _TYPES_H_ 1
 
 // CGAL
-//#include <CGAL/Simple_cartesian.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Regular_triangulation_filtered_traits_2.h>
 #include <CGAL/Regular_triangulation_2.h>
-#include <CGAL/regular_neighbor_coordinates_2.h>
+#include <CGAL/Generalized_map.h>
+#include <CGAL/Point_set_3.h>
 
-// local
+// Local
 #include "enriched_segment.h"
 #include "convex_polygon.h"
 #include "primitives.h"
@@ -21,7 +20,9 @@
 #undef min
 #undef max
 
-//typedef CGAL::Simple_cartesian<double> Kernel;
+// New Minimum CMake Version: 3.1
+
+// New CGAL kernel using exact predicates and inexact constructions
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 
 // Basic types
@@ -37,26 +38,25 @@ typedef Kernel::Triangle_2 Triangle;
 typedef CDomain<Kernel> Domain;
 
 // Traits
-typedef CGAL::Regular_triangulation_filtered_traits_2<Kernel> Traits;
-typedef Traits::Weighted_point_2 Weighted_point;
-typedef Traits::Weight Weight;
+typedef Kernel::Weighted_point_2 Weighted_point;
+//typedef Kernel::Weight Weight;
+
 // Natural Neighbor
-typedef std::vector< std::pair< Weighted_point, Kernel::FT  > >
-                                                       Point_coordinate_vector;
+typedef std::vector< std::pair<Weighted_point, Kernel::FT> >Point_coordinate_vector;
 
 // Vertex
-typedef CGAL::Regular_triangulation_vertex_base_2<Traits> RVb;
-typedef My_vertex_base<Traits, RVb> MVb;
+typedef CGAL::Regular_triangulation_vertex_base_2<Kernel> RVb;
+typedef My_vertex_base<Kernel, RVb> MVb;
 typedef MVb::Pixel Pixel;
 typedef MVb::PointSingularity PointSingularity;
 
 // Face
-typedef CGAL::Regular_triangulation_face_base_2<Traits> RFb;
-typedef My_face_base<Traits, RFb> MFb;
+typedef CGAL::Regular_triangulation_face_base_2<Kernel> RFb;
+typedef My_face_base<Kernel, RFb> MFb;
 
 // Triangulation
 typedef CGAL::Triangulation_data_structure_2<MVb, MFb> TDS;
-typedef CGAL::Regular_triangulation_2<Traits, TDS> Regular_triangulation;
+typedef CGAL::Regular_triangulation_2<Kernel, TDS> Regular_triangulation;
 typedef CTriangulation<Regular_triangulation> RT;
 typedef RT::ConvexPolygon ConvexPolygon;
 
@@ -83,3 +83,4 @@ typedef CEnrichedSegment<Segment, Vertex_handle> EnrichedSegment;
 typedef CGrid<EnrichedSegment> Grid;
 
 #endif
+

@@ -19,6 +19,9 @@
 #include "console_color.h"
 #include "timer.h"
 
+//CGAL
+#include <CGAL/regular_neighbor_coordinates_2.h>
+
 class Scene;
 class VoronoiCreator;
 class MainWindow;

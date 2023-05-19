@@ -15,7 +15,7 @@ public:
     
     typedef typename Rt::Geom_traits    Kernel;
     typedef typename Kernel::FT         FT;
-    typedef typename Kernel::Weight     Weight;
+    //typedef typename Kernel::Weight     Weight;
     typedef typename Kernel::Point_2    Point;
     typedef typename Kernel::Vector_2   Vector;
     typedef typename Kernel::Ray_2      Ray;
