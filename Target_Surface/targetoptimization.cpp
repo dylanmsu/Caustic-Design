@@ -128,6 +128,36 @@ void TargetOptimization::addResidualBlocks(Problem *problem, uint vertexIndex, v
 
         // For eint we have several functors, each for a different amount of neighbors
         switch(neighbors.size()){
+        case 2:
+        {
+
+            CostFunction* cost_function_eint2 =
+                new AutoDiffCostFunction<CostFunctorEint2Neighbors, 3, 3, 3, 3>(new CostFunctorEint2Neighbors(&model->desiredNormals[model->meshes[0].edgeToNoEdgeMapping[vertexIndex]], neighborMap));
+
+            problem->AddResidualBlock(cost_function_eint2, NULL,
+                                       &vertices[vertexIndex*3], // vertex
+                                       &vertices[neighbors[0]*3], // and the neighbors..
+                                       &vertices[neighbors[1]*3]);
+
+
+            break;
+            }
+        case 3:
+        {
+
+            CostFunction* cost_function_eint3 =
+                new AutoDiffCostFunction<CostFunctorEint3Neighbors, 3, 3, 3, 3, 3>(new CostFunctorEint3Neighbors(&model->desiredNormals[model->meshes[0].edgeToNoEdgeMapping[vertexIndex]], neighborMap));
+
+            problem->AddResidualBlock(cost_function_eint3, NULL,
+                                       &vertices[vertexIndex*3], // vertex
+                                       &vertices[neighbors[0]*3], // and the neighbors..
+                                       &vertices[neighbors[1]*3],
+                                       &vertices[neighbors[2]*3]);
+
+
+            break;
+            }
+
         case 4:
         {
 
@@ -268,12 +298,15 @@ void TargetOptimization::addResidualBlocks(Problem *problem, uint vertexIndex, v
 
 }
 
+bool Contains(const std::vector<int> &list, int x)
+{
+	return std::find(list.begin(), list.end(), x) != list.end();
+}
+
 void TargetOptimization::runOptimization(Model* m, Renderer* renderer){
 
     model = m;
     Mesh * mesh = &model->meshes[0];
-
-    std::cout << "0" << std::endl;
 
     // make a copy of the original positions of the vertices
     for (int i = 0; i < mesh->faceVerticesEdge.size(); i++) {
@@ -281,22 +314,14 @@ void TargetOptimization::runOptimization(Model* m, Renderer* renderer){
         x_sources.push_back(v);
     }
 
-    std::cout << "1" << std::endl;
-
     vector<vector<int> > neighborsPerVertex;
     neighborsPerVertex.resize(mesh->faceVerticesEdge.size());
-
-    std::cout << "2" << std::endl;
 
     vector<vector<int> > neighborMapPerVertex;
     neighborMapPerVertex.resize(mesh->faceVerticesEdge.size());
 
-    std::cout << "3" << std::endl;
-
     vector<vector<int> > eightNeighborsPerVertex;
     eightNeighborsPerVertex.resize(mesh->faceVerticesEdge.size());
-
-    std::cout << "4" << std::endl;
 
     // gather information for each vertex to optimize
     for(uint i = 0; i < mesh->faceVerticesEdge.size(); i++)
@@ -313,14 +338,10 @@ void TargetOptimization::runOptimization(Model* m, Renderer* renderer){
         eightNeighborsPerVertex[i] = eightNeighbors;
     }
 
-    std::cout << "5" << std::endl;
-
     // prepare model and mesh
     mesh->calculateVertexNormals();
     model->computeLightDirectionsScreenSurface();
     model->fresnelMapping();
-
-    std::cout << "6" << std::endl;
 
     // optimize until converged or maximum step amount reached
     for(uint loop = 0; loop < 10; loop++)
@@ -336,21 +357,40 @@ void TargetOptimization::runOptimization(Model* m, Renderer* renderer){
             vertices[3*i + 2] = pos->z;
         }
 
+        bool duplicate = false;
+
+        // check for duplicate items 
+        /*for (int i=0; i<mesh->faceVerticesEdge.size(); i++) {
+            for (int j=0; j<mesh->faceVerticesEdge.size(); j++) {
+                if (i != j) {
+                    if (
+                        floor(vertices[3*i + 0]*100000) == floor(vertices[3*j + 0]*100000) &&
+                        floor(vertices[3*i + 1]*100000) == floor(vertices[3*j + 1]*100000) &&
+                        floor(vertices[3*i + 2]*100000) == floor(vertices[3*j + 2]*100000)) {
+                        std::cout << "has same" << std::endl;
+                    }
+                }
+            }
+        }*/
+
         Problem prob;
 
         // iterate over all vertices and add the corresponding residual blocks
         for(uint i=0; i<neighborsPerVertex.size(); i++)
         {
+            //std::cout << "block " << i << std::endl;
+            //std::cout << "neighborsPerVertex " << neighborsPerVertex[i].size() <<  std::endl;
+            //std::cout << "neighborMapPerVertex " << neighborMapPerVertex[i].size() <<  std::endl;
+            //std::cout << "eightNeighborsPerVertex " << eightNeighborsPerVertex[i].size() <<  std::endl;
             addResidualBlocks(&prob, i, neighborsPerVertex[i], neighborMapPerVertex[i], eightNeighborsPerVertex[i], vertices);
         }
-
 
         Solver::Options options;
         options.minimizer_progress_to_stdout = true;
         options.linear_solver_type = ceres::ITERATIVE_SCHUR;
         options.max_num_iterations = 200;
         options.dense_linear_algebra_library_type = ceres::LAPACK;
-        options.num_threads = 4;
+        options.num_threads = 16;
 
         string error;
         if(!options.IsValid(&error))

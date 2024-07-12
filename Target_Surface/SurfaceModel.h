@@ -33,6 +33,7 @@ class Model {
         void printAllVertices();
         void exportModel(std::string filename);
         vector<glm::vec3> getLightRayPositions();
+        glm::vec3 getFocalPlaneScale() { return this->targetPlaneScale; }
         glm::vec3 getFocalPlanePos() { return this->targetPlanePosition; }
         glm::quat getFocalPlaneQuat() { return this->targetPlaneRotationQuaternion; }
 
@@ -41,7 +42,10 @@ class Model {
         void setFocalPlanePosZ(float z);
 
         void setFocalPlaneRotY(float y);
-        void setFocalPlaneRotZ(float y);
+        void setFocalPlaneRotZ(float z);
+
+        void setFocalPlaneScaleY(float y);
+        void setFocalPlaneScaleZ(float z);
 
         void updateTargetPlaneRotationMatrix();
 
@@ -67,6 +71,7 @@ class Model {
 
         glm::vec3 targetPlanePosition;
         glm::vec3 targetPlaneRotation;
+        glm::vec3 targetPlaneScale;
 
         glm::quat targetPlaneRotationQuaternion;
 

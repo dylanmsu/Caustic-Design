@@ -34,7 +34,7 @@
 #define EBAR_DETH 39
 #define EINT_WEIGHT 1.0
 #define EBAR_WEIGHT 1.0
-#define EDIR_WEIGHT 1.0
+#define EDIR_WEIGHT 0.6
 #define EREG_WEIGHT 10.0
 #define MAX_Y 1
 #define MAX_Z 1
@@ -44,11 +44,11 @@
 #define REFLECTIVE_CAUSTICS false 
 
 #if (REFLECTIVE_CAUSTICS == false)
-    #define INCIDENT_RAY_X -1.0f 
+    #define INCIDENT_RAY_X 1.0f 
     #define INCIDENT_RAY_Y 0.0f
     #define INCIDENT_RAY_Z 0.0f
 #else
-    #define INCIDENT_RAY_X 1.0f 
+    #define INCIDENT_RAY_X -1.0f 
     #define INCIDENT_RAY_Y 0.0f
     #define INCIDENT_RAY_Z 0.0f
 #endif

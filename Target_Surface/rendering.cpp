@@ -268,13 +268,14 @@ void ModelRendering::paintReceiver()
     {
         float surfaceSize = model.surfaceSize;
         //float f = model.getFocalLength() + model.meshes[0].getMaxX();
+        glm::vec3 scale = model.getFocalPlaneScale();
         glm::vec3 pos = model.getFocalPlanePos();
         glm::quat rot = model.getFocalPlaneQuat();
 
-        glm::vec3 corner1 = glm::vec3(0, -surfaceSize, -surfaceSize) * rot + pos;
-        glm::vec3 corner2 = glm::vec3(0, -surfaceSize,  surfaceSize) * rot + pos;
-        glm::vec3 corner3 = glm::vec3(0,  surfaceSize,  surfaceSize) * rot + pos;
-        glm::vec3 corner4 = glm::vec3(0,  surfaceSize, -surfaceSize) * rot + pos;
+        glm::vec3 corner1 = (glm::vec3(0, -surfaceSize, -surfaceSize)*scale) * rot + pos;
+        glm::vec3 corner2 = (glm::vec3(0, -surfaceSize,  surfaceSize)*scale) * rot + pos;
+        glm::vec3 corner3 = (glm::vec3(0,  surfaceSize,  surfaceSize)*scale) * rot + pos;
+        glm::vec3 corner4 = (glm::vec3(0,  surfaceSize, -surfaceSize)*scale) * rot + pos;
 
         glBegin(GL_QUADS);
             glColor3f(1,1,1);

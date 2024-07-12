@@ -427,18 +427,16 @@ public:
     template <typename T> bool operator()(const T* const vertex,
                                           const T* const neighbor1,
                                           const T* const neighbor2,
-                                          const T* const neighbor3,
                                           T* residual) const
     {
 
         // -- preparation
-        const T* neighbors[3];
+        const T* neighbors[2];
         neighbors[0] = neighbor1;
         neighbors[1] = neighbor2;
-        neighbors[2] = neighbor3;
 
 
-        evaluateInt(vertex, neighbors, 3, neighborMap, desiredNormal, residual);
+        evaluateInt(vertex, neighbors, 2, neighborMap, desiredNormal, residual);
 
         return true;
     }

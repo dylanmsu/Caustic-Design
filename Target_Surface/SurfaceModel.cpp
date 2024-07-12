@@ -26,6 +26,10 @@ Model::Model(GLchar* path){
     this->targetPlaneRotation.x = 0.0f;
     this->targetPlaneRotation.y = 0.0f;
     this->targetPlaneRotation.z = 0.0f;
+
+    this->targetPlaneScale.x = 1.0f;
+    this->targetPlaneScale.y = 1.0f;
+    this->targetPlaneScale.z = 1.0f;
 }
 
 Model::Model()
@@ -39,6 +43,10 @@ Model::Model()
     this->targetPlaneRotation.x = 0.0f;
     this->targetPlaneRotation.y = 0.0f;
     this->targetPlaneRotation.z = 0.0f;
+
+    this->targetPlaneScale.x = 1.0f;
+    this->targetPlaneScale.y = 1.0f;
+    this->targetPlaneScale.z = 1.0f;
 }
 
 void Model::exportModel(std::string filename)
@@ -337,7 +345,10 @@ void Model::setFocalPlanePosZ(float z) {this->targetPlanePosition.z = z;}
 void Model::setFocalPlaneRotY(float y) {this->targetPlaneRotation.y = y;}
 void Model::setFocalPlaneRotZ(float z) {this->targetPlaneRotation.z = z;}
 
-void Model::updateTargetPlaneRotationMatrix() 
+void Model::setFocalPlaneScaleY(float y) {this->targetPlaneScale.y = y;}
+void Model::setFocalPlaneScaleZ(float z) {this->targetPlaneScale.z = z;}
+
+void Model::updateTargetPlaneRotationMatrix()
 {
     targetPlaneRotationQuaternion = glm::quat(targetPlaneRotation);
 }
@@ -444,7 +455,7 @@ void Model::computeLightDirectionsScreenSurface(){
 //             vecNorm = meshes[0].faceVerticesEdge[i]->Normal;
 //             std::cout<<"load edge: "<<i<<std::endl;
 //         }
-        vecNorm = ((receiverLightPositions[i]*targetPlaneRotationQuaternion + targetPlanePosition) - meshes[0].faceVertices[i]->Position);
+        vecNorm = (((receiverLightPositions[i]*targetPlaneScale)*targetPlaneRotationQuaternion + targetPlanePosition) - meshes[0].faceVertices[i]->Position);
         //vecNorm = vecNorm + targetPlanePosition
         screenDirections.push_back(glm::normalize(vecNorm));
     }
@@ -459,11 +470,20 @@ glm::vec3 calculateReflectiveSurfaceNormal(const glm::vec3& incidentRayNormal, c
 }
 
 //compute the desired normals
-void Model::fresnelMapping(){
+/*void Model::fresnelMapping(){
     float refraction = MATERIAL_REFRACTIV_INDEX;
     desiredNormals.clear();
-    int j;
+
+    //glm::vec3 point_src;
+    //point_src.x = -6.5f/20;
+    //point_src.y = 0.0f;
+    //point_src.z = 0.0f;
+
     for(int i = 0; i<meshes[0].faceVertices.size(); i++){
+
+        //glm::vec3 incidentLight = point_src - meshes[0].faceVertices[i]->Position;
+        //incidentLight.y = -incidentLight.y;
+        //incidentLight.z = -incidentLight.z;
 
         glm::vec3 incidentLight;
         incidentLight.x = INCIDENT_RAY_X;
@@ -471,11 +491,53 @@ void Model::fresnelMapping(){
         incidentLight.z = INCIDENT_RAY_Z;
 
         if (REFLECTIVE_CAUSTICS) {
+            glm::vec3 norm = glm::normalize(screenDirections[i] + glm::normalize(incidentLight));
+            desiredNormals.push_back(norm);
+        } else {
+            //glm::vec3 norm = glm::normalize(glm::normalize(screenDirections[i]) - glm::normalize(incidentLight)*refraction);
+            //norm.y = -norm.y;
+            //norm.z = -norm.z;
+            //desiredNormals.push_back(norm);
+            
+            //calculate sin(i1)/sin(i2)
+            glm::vec3 norm = glm::normalize(screenDirections[i]/refraction + incidentLight)*-1.0f;
+            desiredNormals.push_back(norm);
+        }
+    }
+}*/
+
+//compute the desired normals
+void Model::fresnelMapping() {
+    float refraction = MATERIAL_REFRACTIV_INDEX;
+    desiredNormals.clear();
+
+    bool use_point_src = false;
+
+    glm::vec3 pointLightPosition;
+
+    if (use_point_src) {
+        pointLightPosition.x = -1*surfaceSize*2;
+        pointLightPosition.y = 0.0;
+        pointLightPosition.z = 0.0;
+    }
+
+    for(int i = 0; i < meshes[0].faceVertices.size(); i++) {
+
+        glm::vec3 incidentLight;
+        if (use_point_src) {
+            glm::vec3 vertexPosition = meshes[0].faceVertices[i]->Position;
+            incidentLight = glm::normalize(vertexPosition - pointLightPosition);
+        } else {
+            incidentLight.x = INCIDENT_RAY_X;
+            incidentLight.y = INCIDENT_RAY_Y;
+            incidentLight.z = INCIDENT_RAY_Z;
+        }
+
+        if (REFLECTIVE_CAUSTICS) {
             glm::vec3 norm = glm::normalize(screenDirections[i] + incidentLight);
             desiredNormals.push_back(norm);
         } else {
-            //calculate sin(i1)/sin(i2)
-            glm::vec3 norm = glm::normalize(screenDirections[i]/refraction + incidentLight)*-1.0f;
+            glm::vec3 norm = glm::normalize(glm::normalize(screenDirections[i]) - glm::normalize(incidentLight) * refraction) * -1.0f;
             desiredNormals.push_back(norm);
         }
     }
@@ -484,7 +546,7 @@ void Model::fresnelMapping(){
 vector<glm::vec3> Model::getLightRayPositions() {
     vector<glm::vec3> translated;
     for (int i=0; i<receiverLightPositions.size(); i++) {
-        translated.push_back(receiverLightPositions[i]*this->targetPlaneRotationQuaternion + this->targetPlanePosition);
+        translated.push_back((receiverLightPositions[i] * targetPlaneScale)*this->targetPlaneRotationQuaternion + this->targetPlanePosition);
     }
     return translated;
 }
