@@ -124,15 +124,27 @@ or
 - You now have your caustic surface computed. This can be fabricated by a CNC machine. You can also simulate the caustics in blender using LuxRender.
 
 ## HOW DOES IT WORK
-Lets consider a rectangular grid of prisms. Collimated light enters the prism grid and exits the grid in directions determined by the geometry of the prisms, generally opposite to the xy tilt of the facet where the light exits from. So by changing xy tilt of the prism facets, we can control where each light ray is being directed to. Now with some maths using Snell's law we can design a prism array that casts a shape using dots. Here is an example point set generated from the olympic rings.
-![image](https://github.com/dylanmsu/Caustic-Design/assets/16963581/e599543f-e06e-473f-a4e4-54157bd38812)
+When we want to create a lens surface that casts a certain shadow, we want to change the surface as subtile as possible such that it redirects the light in just the right way to cast our disired image.
 
-We can generate a prism grid where each prism redirects the licht to one of the points of the point set. And thus creating an object that turns colimated licht into an olympic rings image.
+This is achieved in 3 steps:
+- Get the current shadow of the lens
+- find the optimal transport between the current shadow and the shadow we want to achieve
+- encode this transport mapping in the surface of our lens
 
-The problem is, this prism grid is very dificult to make, even more so with smaller prisms. To solve this we can use an initially flat surface that is shaped like a rectangular mesh with vertices and faces. When we move one of the vertices of this mesh slightly outside of the flat surface, the faces that are connected to that vertex wil change their tilt slightly (think of 3d moddeling). Now, we can then ask an optimization algorithm to solve the hights of the vertices such that the tilt of every face is as close as possible to the required tilt calculated by snells law. The optimization algorithm will then spit out the ideal hights of every vertex such that when we shine colimated light through it, it wil project our image.
+the last two steps are the most complex and fundamental to this method.
 
-But in reality, this isn't quite as simple as that. That's where optimal transport comes in...
+### Optimal transport
+An optimal transport mapping is the most optimal way to move one distribution to another, in our case light.
 
-To get the best results, we need neighboring facets to have as little as possible tilt difference. We cannot guarantee this if we assign each facet to each target point at random. In fact, this will generate very poor, or even no results.
+the steps to compute the optimal transport are as follows:
+- descretize the input distribution by dithering
+- construct a power diagram (Laguerre–Voronoi diagram) of the descretization
+- optimize the weights of the power diagram while continuing to update the power diagram so that it converges to a optimal mapping between the input and target distribution
 
+In our case we dither the the input distribution using lloyd iterations on a power diagram with weights equal to 0 (regular voronoi diagram). The output of this descretization is then fed into the solver that finds the disired weights. 
+
+when the solver finishes, we have a set of weights for the given dithered point set. When we construct the power diagram with the calculated weights, we get our target distribution, and if we construct the power diagram of the same points with weights equal to 0, we get our input distribution. This is our optimal transport mapping.
+
+### Encoding the optimal transport on the surface
 TODO
+
