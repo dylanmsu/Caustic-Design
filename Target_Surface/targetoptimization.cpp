@@ -417,6 +417,7 @@ void TargetOptimization::runOptimization(Model* m, Renderer* renderer){
         mesh->calculateVertexNormals();
         model->computeLightDirectionsScreenSurface();
         model->fresnelMapping();
+        renderer->repaint();
 
         // check for convergence
         if((summary.num_successful_steps + summary.num_unsuccessful_steps) == 0){

@@ -506,35 +506,103 @@ glm::vec3 calculateReflectiveSurfaceNormal(const glm::vec3& incidentRayNormal, c
     }
 }*/
 
+// Function to calculate the gradient of f(y, z)
+void gradient(  glm::vec3 source,
+                glm::vec3 interf,
+                glm::vec3 target,
+                double n1, double n2,
+                double & grad_y, double & grad_z) {
+    double d1 = std::sqrt((interf.x - source.x) * (interf.x - source.x) + (interf.y - source.y) * (interf.y - source.y) + (interf.z - source.z) * (interf.z - source.z));
+    double d2 = std::sqrt((target.x - interf.x) * (target.x - interf.x) + (target.y - interf.y) * (target.y - interf.y) + (target.z - interf.z) * (target.z - interf.z));
+
+    grad_y = n1 * (interf.y - source.y) / d1 - n2 * (target.y - interf.y) / d2;
+    grad_z = n1 * (interf.z - source.z) / d1 - n2 * (target.z - interf.z) / d2;
+}
+
 //compute the desired normals
 void Model::fresnelMapping() {
     float refraction = MATERIAL_REFRACTIV_INDEX;
     desiredNormals.clear();
 
-    bool use_point_src = false;
+    double boundary_x = -0.1*surfaceSize*2;
+
+    vector<glm::vec3> boundary_points;
+
+    bool use_point_src = true;
 
     glm::vec3 pointLightPosition;
 
+    double min_x = std::numeric_limits<double>::max(); // Use a more standard way to get the maximum double value
+
+    // Find the minimum x position among all vertices
+    for(int i = 0; i < meshes[0].faceVertices.size(); i++) {
+        glm::vec3 vertexPosition = meshes[0].faceVertices[i]->Position;
+        if (vertexPosition.x < min_x) {
+            min_x = vertexPosition.x;
+        }
+    }
+
+    //std::cout << "min_x = " << min_x << std::endl;
+    //std::cout << "boundary_x = " << boundary_x << std::endl;
+
+    // Check if the minimum x position is less than the boundary
+    double offset = boundary_x-min_x;
+    for(int i = 0; i < meshes[0].faceVertices.size(); i++) {
+        meshes[0].faceVertices[i]->Position.x +=offset;
+    }
+
     if (use_point_src) {
-        pointLightPosition.x = -1*surfaceSize*2;
+        pointLightPosition.x = -0.5*surfaceSize*2;
         pointLightPosition.y = 0.0;
         pointLightPosition.z = 0.0;
+
+        // calculate the ray intersections on the face where the light enters the material
+        for(int i = 0; i < meshes[0].faceVertices.size(); i++) {
+            glm::vec3 boundary_point(3);
+
+            glm::vec3 vertexPosition = meshes[0].faceVertices[i]->Position;
+
+            // ray to plane intersection to get the initial points
+            double t = ((boundary_x - pointLightPosition.x) / (vertexPosition.x - pointLightPosition.x));
+            boundary_point.x = boundary_x;
+            boundary_point.y = pointLightPosition.y + t*(vertexPosition.y - pointLightPosition.y);
+            boundary_point.z = pointLightPosition.z + t*(vertexPosition.z - pointLightPosition.z);
+            boundary_points.push_back(boundary_point);
+        }
+    }
+
+    // run gradient descent on the ray intersection points to find their optimal positions such that they satisfy Fermat's principle
+    for (int i=0; i<boundary_points.size(); i++) {
+        glm::vec3 vertexPosition = meshes[0].faceVertices[i]->Position;
+        for (int iteration=0; iteration<100000; iteration++) {
+            double grad_y;
+            double grad_z;
+            gradient(pointLightPosition, boundary_points[i], vertexPosition, 1.0, MATERIAL_REFRACTIV_INDEX, grad_y, grad_z);
+
+            boundary_points[i].y -= 0.1 * grad_y;
+            boundary_points[i].z -= 0.1 * grad_z;
+
+            // if magintude of both is an adequate level
+            if (grad_y*grad_y + grad_z*grad_z < 0.000001) {
+                break;
+            }
+        }
     }
 
     for(int i = 0; i < meshes[0].faceVertices.size(); i++) {
-
+        glm::vec3 vertexPosition = meshes[0].faceVertices[i]->Position;
         glm::vec3 incidentLight;
+
         if (use_point_src) {
-            glm::vec3 vertexPosition = meshes[0].faceVertices[i]->Position;
-            incidentLight = glm::normalize(vertexPosition - pointLightPosition);
+            incidentLight = glm::normalize(vertexPosition - boundary_points[i]);
         } else {
-            incidentLight.x = INCIDENT_RAY_X;
-            incidentLight.y = INCIDENT_RAY_Y;
-            incidentLight.z = INCIDENT_RAY_Z;
+            incidentLight.x = 1;
+            incidentLight.y = 0;
+            incidentLight.z = 0;
         }
 
         if (REFLECTIVE_CAUSTICS) {
-            glm::vec3 norm = glm::normalize(screenDirections[i] + incidentLight);
+            glm::vec3 norm = glm::normalize(screenDirections[i] - incidentLight) * -1.0f;
             desiredNormals.push_back(norm);
         } else {
             glm::vec3 norm = glm::normalize(glm::normalize(screenDirections[i]) - glm::normalize(incidentLight) * refraction) * -1.0f;

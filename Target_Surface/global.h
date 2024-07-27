@@ -33,7 +33,7 @@
 #define AIR_REFRACTIV_INDEX 1
 #define EBAR_DETH 39
 #define EINT_WEIGHT 1.0
-#define EBAR_WEIGHT 1.0
+#define EBAR_WEIGHT 0
 #define EDIR_WEIGHT 0.6
 #define EREG_WEIGHT 10.0
 #define MAX_Y 1
