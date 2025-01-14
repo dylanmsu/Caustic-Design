@@ -1,7 +1,14 @@
 cmake_minimum_required( VERSION 2.6 )
 set ( CMAKE_BUILD_TYPE Release )
 #add_definitions ( -Wall )
-find_package ( Qt4 REQUIRED )
+
+
+# Specify the required Qt5 components
+find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
+
+# Include the directories where the Qt headers are located
+include_directories(${Qt5Widgets_INCLUDE_DIRS})
+include_directories(${Qt5OpenGL_INCLUDE_DIRS})
 
 
 ##########################
@@ -39,7 +46,7 @@ set(ASSIMP_FLAGS "-lassimp")
 
 set(QT_USE_QTOPENGL TRUE)
 set (CMAKE_CXX_FLAGS "-g -frounding-math -O3 ${ASSIMP_FLAGS}")
-include ( ${QT_USE_FILE} )
+#include ( ${QT_USE_FILE} )
 include_directories (
 	${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 	${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR}
@@ -73,13 +80,13 @@ set ( Target_Surface_Src
 set ( Target_Surface_UIS
 	mainwindow.ui
 	)
-QT4_WRAP_UI(UIS ${Target_Surface_UIS})
+QT5_WRAP_UI(UIS ${Target_Surface_UIS})
 
 set ( Target_Surface_MOCS
 	rendering.h
 	mainwindow.h
 	)
-QT4_WRAP_CPP(MOCS ${Target_Surface_MOCS})
+QT5_WRAP_CPP(MOCS ${Target_Surface_MOCS})
 
 add_executable ( Target_Surface ${Target_Surface_Src} ${UIS} ${RSCS} ${TRS} ${MOCS} )
-target_link_libraries ( Target_Surface  ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${QT_QTOPENGL_LIBRARY} ${OPENGL_LIBRARIES} ${GLU_LIBRARY} ${CERES_LIBRARIES} ${ASSIMP_FLAGS})
+target_link_libraries ( Target_Surface  ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${QT_QTOPENGL_LIBRARY} ${OPENGL_LIBRARIES} ${GLU_LIBRARY} ${CERES_LIBRARIES} ${ASSIMP_FLAGS} Qt5::Widgets Qt5::OpenGL)

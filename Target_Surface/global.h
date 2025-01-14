@@ -4,7 +4,7 @@
 #define GLM_FORCE_RADIANS
 
 #define QT_NO_OPENGL_ES_2
-#include <QGLWidget>
+#include <QOpenGLWidget>
 #include <QGLFunctions>
 
 #include "GL/gl.h"
