@@ -44,11 +44,11 @@
 #define REFLECTIVE_CAUSTICS false 
 
 #if (REFLECTIVE_CAUSTICS == false)
-    #define INCIDENT_RAY_X 1.0f 
+    #define INCIDENT_RAY_X -1.0f 
     #define INCIDENT_RAY_Y 0.0f
     #define INCIDENT_RAY_Z 0.0f
 #else
-    #define INCIDENT_RAY_X -1.0f 
+    #define INCIDENT_RAY_X 1.0f 
     #define INCIDENT_RAY_Y 0.0f
     #define INCIDENT_RAY_Z 0.0f
 #endif

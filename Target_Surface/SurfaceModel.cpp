@@ -534,10 +534,10 @@ void Model::fresnelMapping() {
         }
 
         if (REFLECTIVE_CAUSTICS) {
-            glm::vec3 norm = glm::normalize(screenDirections[i] + incidentLight);
+            glm::vec3 norm = glm::normalize(glm::normalize(screenDirections[i]) + glm::normalize(incidentLight));
             desiredNormals.push_back(norm);
         } else {
-            glm::vec3 norm = glm::normalize(glm::normalize(screenDirections[i]) - glm::normalize(incidentLight) * refraction) * -1.0f;
+            glm::vec3 norm = glm::normalize(glm::normalize(screenDirections[i]) + glm::normalize(incidentLight) * refraction) * -1.0f;
             desiredNormals.push_back(norm);
         }
     }
