@@ -203,12 +203,20 @@ void Mesh::createFrontFaceMatrix()
 {
     frontFaceMatrix.clear();
 
-    int rows = (int) (sqrt(faceVerticesEdge.size()) + 0.5);
-    int cols = rows;
+    // int rows = (int) (sqrt(faceVerticesEdge.size()) + 0.5);
+    // int cols = rows;
 
-    std::cout << "rows = " << rows << std::endl;
+    // temporary solution, assuming stepZ and stepY are equal
+    int rows = (int) (sqrt(faceVerticesEdge.size() * maxZ / maxY) + 0.5);
+    int cols = (int) (sqrt(faceVerticesEdge.size() * maxY / maxZ) + 0.5);
 
-    double step = (2*maxY) / (rows-1);
+    std::cout << "rows = " << rows << ", cols = " << cols << std::endl;
+
+    double stepY = (2*maxY) / (cols-1);
+    double stepZ = (2*maxZ) / (rows-1);
+
+    std::cout << "stepZ = " << stepZ << ", stepY = " << stepY << std::endl; // should be equal
+    // std::cout << "2*maxZ/stepZ = rows-1 = " << 2*maxZ/stepZ << ", 2*maxY/stepY = cols-1 = " << 2*maxY/stepY << std::endl;
 
     frontFaceMatrix.resize(rows);
     vertexRowMap.resize(faceVerticesEdge.size());
@@ -227,8 +235,8 @@ void Mesh::createFrontFaceMatrix()
     {
         glm::vec3 * pos = &faceVerticesEdge[i]->Position;
 
-        int col = (int) (((pos->y + maxY) / step) + 0.5);
-        int row = (int) (((pos->z + maxZ) / step) + 0.5);
+        int col = (int) (((pos->y + maxY) / stepY) + 0.5);
+        int row = (int) (((pos->z + maxZ) / stepZ) + 0.5);
 
         frontFaceMatrix[row][col] = i;
 
