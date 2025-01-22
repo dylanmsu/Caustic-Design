@@ -29,7 +29,7 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QWidget" name="layoutWidget1">
    <property name="geometry">
     <rect>
      <x>260</x>
@@ -188,7 +188,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QWidget" name="layoutWidget2">
    <property name="geometry">
     <rect>
      <x>32</x>
@@ -343,9 +343,9 @@
    </layout>
   </widget>
   <zorder>buttonBox</zorder>
-  <zorder>layoutWidget</zorder>
+  <zorder>layoutWidget1</zorder>
   <zorder>layoutWidget3</zorder>
-  <zorder>layoutWidget</zorder>
+  <zorder>layoutWidget2</zorder>
   <zorder>site_amount_spin</zorder>
  </widget>
  <resources/>

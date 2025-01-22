@@ -1,107 +1,139 @@
-cmake_minimum_required( VERSION 2.6 )
-set ( CMAKE_BUILD_TYPE Release )
-#add_definitions ( -Wall )
-find_package ( Qt4 REQUIRED )
+cmake_minimum_required(VERSION 3.10)
 
+# Project settings
+project(Caustic_Design)
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find Qt5 components
+find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
+
+# Include directories for Qt5
+include_directories(${Qt5Widgets_INCLUDE_DIRS})
+include_directories(${Qt5OpenGL_INCLUDE_DIRS})
+
+# Find OpenGL
 find_package(OpenGL REQUIRED)
-include_directories(${OpenGL_INCLUDE_DIRS})
-link_directories(${OpenGL_LIBRARY_DIRS})
-add_definitions(${OpenGL_DEFINITIONS})
 if(NOT OPENGL_FOUND)
-    message(ERROR " OPENGL not found!")
-endif(NOT OPENGL_FOUND)
+    message(FATAL_ERROR "OpenGL not found!")
+endif()
+include_directories(${OPENGL_INCLUDE_DIRS})
+link_directories(${OPENGL_LIBRARY_DIRS})
+add_definitions(${OPENGL_DEFINITIONS})
 
-################################
-# lbfgs
-################################
+# Find LBFGS
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
-FIND_PACKAGE(LBFGS)
+find_package(LBFGS REQUIRED)
 
-################################
-# suitesparse
-################################
-FIND_PACKAGE(SUITESPARSE REQUIRED)
+# Find SuiteSparse
+find_package(SUITESPARSE REQUIRED)
 
-###############################
-# tinyxml
-###############################
-FIND_PACKAGE(TinyXML REQUIRED)
+# Find TinyXML
+find_package(TinyXML REQUIRED)
 
+# Find CGAL
+find_package(CGAL REQUIRED)
+include_directories(${CGAL_INCLUDE_DIRS})
 
-set(QT_USE_QTOPENGL TRUE)
-set ( CGAL_FLAGS "-lCGAL -lboost_thread -lgmp -lmpfr -lm -lamd -lcamd -lcolamd -lccolamd -lcholmod -lspqr -ltbb -lmetis -lblas -llapack" )
-set (CMAKE_CXX_FLAGS "-frounding-math -pthread -O3 -std=c++11 ${CGAL_FLAGS}")
-include ( ${QT_USE_FILE} )
-include_directories (
-	${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
-	${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR}
-	${OPENGL_INCLUDE_DIR}
-	${LBFGS_INCLUDE_DIRS}
-	${SUITESPARSE_INCLUDE_DIRS}
-	${TinyXML_INCLUDE_DIRS}
-	/usr/include/)
+# Compiler flags
+set(CMAKE_CXX_FLAGS "-frounding-math -pthread -O3 ${CMAKE_CXX_FLAGS}")
 
-set ( Caustic_Design_HDRS
-	matrix/sparse_array.h
-	matrix/sparse_matrix.h
-	matrix/suite_sparse_qr.h
-	console_color.h
-	convex_polygon.h
-	domain.h
-	enriched_segment.h
-	grid.h
-	line_search.h
-	pgm.h
-	pixel.h
-	primitives.h
-	pw_line_search.h
-	ramp.h
-	random.h
-	rt2.h
-	scene.h
-	timer.h
-	types.h
-	util.h
-	interpolation.h
-	optimal_transport.h
-	#voronoi_creation.h
-	gradientdescent.h
-	)
+# Include directories
+include_directories(
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${Qt5Widgets_INCLUDE_DIRS}
+    ${Qt5OpenGL_INCLUDE_DIRS}
+    ${OPENGL_INCLUDE_DIR}
+    ${LBFGS_INCLUDE_DIRS}
+    ${SUITESPARSE_INCLUDE_DIRS}
+    ${TinyXML_INCLUDE_DIRS}
+)
 
-set ( Caustic_Design_SRCS
-	matrix/sparse_array.cpp
-	matrix/sparse_matrix.cpp
-	assign.cpp
-	energy.cpp
-	glviewer.cpp
-	#histogram.cpp
-	init.cpp
-	io.cpp
-	main.cpp
-	#optimizer.cpp
-	#regularity.cpp
-	render.cpp
-	sites.cpp
-	window.cpp
-	interpolation.cpp
-	optimal_transport.cpp
-	#voronoi_creation.cpp
-	gradientdescent.cpp
-	)
+# Header files
+set(Caustic_Design_HDRS
+    matrix/sparse_array.h
+    matrix/sparse_matrix.h
+    matrix/suite_sparse_qr.h
+    console_color.h
+    convex_polygon.h
+    domain.h
+    enriched_segment.h
+    grid.h
+    line_search.h
+    pgm.h
+    pixel.h
+    primitives.h
+    pw_line_search.h
+    ramp.h
+    random.h
+    rt2.h
+    scene.h
+    timer.h
+    types.h
+    util.h
+    interpolation.h
+    optimal_transport.h
+    gradientdescent.h
+)
 
-set ( Caustic_Design_UIS
-	caustic.ui
-	dialog.ui
-	)
-QT4_WRAP_UI(UIS ${Caustic_Design_UIS})
+# Source files
+set(Caustic_Design_SRCS
+    matrix/sparse_array.cpp
+    matrix/sparse_matrix.cpp
+    assign.cpp
+    energy.cpp
+    glviewer.cpp
+    init.cpp
+    io.cpp
+    main.cpp
+    render.cpp
+    sites.cpp
+    window.cpp
+    interpolation.cpp
+    optimal_transport.cpp
+    gradientdescent.cpp
+)
 
-set ( Caustic_Design_MOCS
-	dialog.h
-	glviewer.h
-	window.h
-	)
-QT4_WRAP_CPP(MOCS ${Caustic_Design_MOCS})
+# UI files
+set(Caustic_Design_UIS
+    caustic.ui
+    dialog.ui
+)
 
-add_executable ( Caustic_Design ${Caustic_Design_SRCS} ${UIS} ${RSCS} ${TRS} ${MOCS} )
+# MOC files
+set(Caustic_Design_MOCS
+    dialog.h
+    glviewer.h
+    window.h
+)
 
-target_link_libraries ( Caustic_Design  ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${QT_QTOPENGL_LIBRARY} ${OPENGL_LIBRARIES} ${GLU_LIBRARY} ${CGAL_FLAGS} ${LBFGS_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${TinyXML_LIBRARIES})
+# Wrap UI and MOC files
+qt5_wrap_ui(UIS_WRAPPED ${Caustic_Design_UIS})
+qt5_wrap_cpp(MOCS_WRAPPED ${Caustic_Design_MOCS})
+
+# Add executable
+add_executable(Caustic_Design
+    ${Caustic_Design_SRCS}
+    ${UIS_WRAPPED}
+    ${MOCS_WRAPPED}
+)
+
+# Link libraries
+target_link_libraries(Caustic_Design
+    Qt5::Widgets
+    Qt5::OpenGL
+    ${OPENGL_LIBRARIES}
+    ${LBFGS_LIBRARIES}
+    ${SUITESPARSE_LIBRARIES}
+    ${TinyXML_LIBRARIES}
+    ${CGAL_LIBRARIES}
+    tbb
+    gmp
+    mpfr
+    blas
+    lapack
+	CGAL::CGAL        # Link CGAL
+)

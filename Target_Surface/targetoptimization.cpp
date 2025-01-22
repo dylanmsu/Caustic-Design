@@ -96,6 +96,10 @@ void TargetOptimization::gatherVertexInformation(Vertex *vertex, uint vertexInde
  */
 void TargetOptimization::addResidualBlocks(Problem *problem, uint vertexIndex, vector<int> &neighbors, vector<int> &neighborMap, vector<int> & gridNeighbors, double *vertices)
 {
+    //std::cout << "vertices[vertexIndex*3] = {" 
+    //    << vertices[vertexIndex*3 + 0] << ", " 
+    //    << vertices[vertexIndex*3 + 1] << ", " 
+    //    << vertices[vertexIndex*3 + 2] << "}" << std::endl;
 
     // EBar only calculates the distance from the vertex to the receiver-plane. So passing x-coordiate of receiving plane is sufficient
     //glm::vec3 receiverPos = glm::vec3(model->meshes[0].getMaxX() + model->getFocalLength(), 0, 0);
@@ -122,7 +126,6 @@ void TargetOptimization::addResidualBlocks(Problem *problem, uint vertexIndex, v
                 NULL, // no loss function
                 &vertices[vertexIndex*3]
                 );
-
 
     if(model->meshes[0].edgeToNoEdgeMapping[vertexIndex] != -1){ //not an edge we optimize the normals
 
