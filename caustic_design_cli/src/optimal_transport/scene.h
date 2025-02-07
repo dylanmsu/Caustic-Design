@@ -12,15 +12,6 @@
 
 class Interpolation;
 
-//class Scene
-//{  
-//private:
-//    Domain m_domain;
-//public:
-//    void load_image(const std::string& filename, const int width);
-//
-//};
-
 class Scene
 {
 public:

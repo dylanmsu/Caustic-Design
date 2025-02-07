@@ -19,8 +19,30 @@ Mesh::Mesh(double width, double height, int res_x, int res_y)
     //this->source_points = circular_transform(this->source_points);
 }
 
+Mesh::Mesh(std::vector<std::vector<double>> new_points, std::vector<std::vector<unsigned int>> new_triangles)
+{
+    for (int i = 0; i < new_points.size(); i++)
+    {
+        this->source_points.push_back(new_points[i]);
+    }
+
+    for (int i = 0; i < new_triangles.size(); i++)
+    {
+        this->triangles.push_back(new_triangles[i]);
+    }
+
+    source_bvh = new Bvh(this->triangles, this->source_points);
+
+    build_vertex_to_triangles();
+}
+
 Mesh::~Mesh()
 {
+    delete(source_bvh);
+}
+
+void Mesh::build_source_bvh(int targetCellSize, int maxDepth) {
+    source_bvh->build(targetCellSize, maxDepth);
 }
 
 void find_perimeter_vertices(int nx, int ny, std::vector<int> &perimeter_vertices) {
@@ -159,7 +181,7 @@ void Mesh::generate_structured_mesh(int nx, int ny, double width, double height,
     // Generate triangles
     for (int i = 0; i < ny - 1; ++i) {
         for (int j = 0; j < nx - 1; ++j) {
-            int idx = i * nx + j;
+            unsigned int idx = i * nx + j;
             triangles.push_back({idx, idx + 1, idx + nx});
             triangles.push_back({idx + nx, idx + 1, idx + nx + 1});
         }
@@ -256,6 +278,33 @@ std::tuple<std::vector<std::pair<int, int>>, std::vector<int>, std::vector<int>>
     return std::make_tuple(adjacent_edges_vector, adjacent_triangles_vector, neighboring_vertices_vector);
 }
 
+std::vector<double> calculate_polygon_centroid(std::vector<std::vector<double>> vertices) {
+    std::vector<double> centroid;
+    centroid.push_back(0.0);
+    centroid.push_back(0.0);
+
+    double signed_area = 0;
+
+    for (int i = 0; i < vertices.size(); i++) {
+        double x0 = vertices[i][0];
+        double y0 = vertices[i][1];
+        double x1 = vertices[(i + 1) % vertices.size()][0];
+        double y1 = vertices[(i + 1) % vertices.size()][1];
+
+        // Shoelace formula
+        double area = (x0 * y1) - (x1 * y0);
+        signed_area += area;
+        centroid[0] += (x0 + x1) * area;
+        centroid[1] += (y0 + y1) * area;
+    }
+
+    signed_area *= 0.5;
+    centroid[0] /= 6 * signed_area;
+    centroid[1] /= 6 * signed_area;
+
+    return centroid;
+}
+
 double calculate_polygon_area_vec(const std::vector<std::vector<double>> input_polygon) {
     if (input_polygon.size() < 3) {
         return 0.0;
@@ -277,6 +326,7 @@ double calculate_polygon_area_vec(const std::vector<std::vector<double>> input_p
 
     return area;
 }
+
 void Mesh::find_vertex_connectivity(int vertex_index, std::vector<int>& neighborList, std::vector<int>& neighborMap) {
     std::unordered_set<int> neighboring_vertices;
 

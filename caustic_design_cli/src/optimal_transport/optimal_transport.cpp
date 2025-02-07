@@ -529,6 +529,8 @@ bool OptimalTransport::generate_voronoi(Scene *sc, unsigned npoints, double epsi
         }
 
         std::cout << "iteration = " << iter << ", norm = " << norm << std::endl;
+
+        scaled_scenes[current_level]->draw_bounded_dual();
     }
 
     std::cout << std::endl;

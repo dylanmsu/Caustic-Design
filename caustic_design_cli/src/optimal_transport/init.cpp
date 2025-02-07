@@ -409,7 +409,7 @@ void export_cells_as_svg(std::vector<std::vector<Point>> &cells, std::vector<std
                 path_str += "L";
         }
         path_str += "Z";
-        svg_file << "<path d=\"" << path_str << "\" fill=\"" << "rgb(" << colors[i][0] * 255 << ", " << colors[i][1] * 255 << ", " << colors[i][2] * 255 << ")\" stroke=\"none\" stroke-width=\"" << 5.0 << "\"/>\n";
+        svg_file << "<path d=\"" << path_str << "\" fill=\"" << "rgb(" << colors[i][0] * 255 << ", " << colors[i][1] * 255 << ", " << colors[i][2] * 255 << ")\" stroke=\"black\" stroke-width=\"" << 1.0 << "\"/>\n";
     }
 
     // Write SVG footer

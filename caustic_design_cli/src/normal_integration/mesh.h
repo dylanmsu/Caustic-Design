@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "../common/bvh.h"
+
 struct HashPair {
     template <class T1, class T2>
     std::size_t operator () (const std::pair<T1, T2>& p) const {
@@ -24,13 +26,15 @@ struct HashPair {
 
 class Mesh {
     private:
-
         void generate_structured_mesh(int nx, int ny, double width, double height, std::vector<std::vector<unsigned int>> &triangles, std::vector<std::vector<double>> &points);
         void generate_poked_mesh(int nx, int ny, double width, double height, std::vector<std::vector<int>> &triangles, std::vector<std::vector<double>> &points);
 
     public:
         Mesh(double width, double height, int res_x, int res_y);
+        Mesh(std::vector<std::vector<double>> points, std::vector<std::vector<unsigned int>> triangles);
         ~Mesh();
+
+        Bvh *source_bvh;
 
         std::unordered_map<int, std::vector<int>> vertex_to_triangles;
 
@@ -43,6 +47,8 @@ class Mesh {
 
         int res_x;
         int res_y;
+
+        void build_source_bvh(int targetCellSize, int maxDepth);
 
         void build_vertex_to_triangles();
 
@@ -62,6 +68,11 @@ class Mesh {
         std::vector<double> calculate_vertex_normal(std::vector<std::vector<double>> &points, int vertex_index);
 
         bool is_border(int vertex_id);
+
 };
+
+std::vector<double> calculate_polygon_centroid(std::vector<std::vector<double>> vertices);
+double calculate_polygon_area_vec(const std::vector<std::vector<double>> input_polygon);
+
 
 #endif

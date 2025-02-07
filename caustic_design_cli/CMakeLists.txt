@@ -70,6 +70,7 @@ set(CD_SRC_FILES
     src/optimal_transport/init.cpp
     src/optimal_transport/interpolation.cpp
     src/optimal_transport/assign.cpp
+    src/common/bvh.cpp
 )
 
 ###################################################################################
