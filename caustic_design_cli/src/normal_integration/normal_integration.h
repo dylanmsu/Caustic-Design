@@ -16,7 +16,7 @@ class normal_integration
 {
 private:
     void gatherVertexInformation(Mesh &mesh, uint vertexIndex, std::vector<int> &neighborList, std::vector<int> &neighborMap, std::vector<int> & gridNeighbors);
-    void addResidualBlocks(Mesh &mesh, Problem *problem, uint vertexIndex, std::vector<int> &neighbors, std::vector<int> &neighborMap, std::vector<int> &gridNeighbors, double *vertices, std::vector<double> &trg_normal);
+    void addResidualBlocks(Mesh &mesh, Problem *problem, uint vertexIndex, vector<int> &neighbors, vector<int> &neighborMap, vector<double> &laplacian, double *vertices, std::vector<double> &trg_normal);
 
     std::vector<std::vector<int> > neighborsPerVertex;
     std::vector<std::vector<int> > neighborMapPerVertex;

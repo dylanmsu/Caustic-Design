@@ -9,7 +9,7 @@ normal_integration::~normal_integration()
 }
 
 
-void normal_integration::addResidualBlocks(Mesh &mesh, Problem *problem, uint vertexIndex, vector<int> &neighbors, vector<int> &neighborMap, vector<int> &gridNeighbors, double *vertices, std::vector<double> &trg_normal)
+void normal_integration::addResidualBlocks(Mesh &mesh, Problem *problem, uint vertexIndex, vector<int> &neighbors, vector<int> &neighborMap, vector<double> &laplacian, double *vertices, std::vector<double> &trg_normal)
 {
     float weightMult = 1.0;
     if(mesh.is_border(vertexIndex)) // we have an edge. Set weight for edir extremely high
@@ -24,7 +24,6 @@ void normal_integration::addResidualBlocks(Mesh &mesh, Problem *problem, uint ve
                 NULL, // no loss function
                 &vertices[vertexIndex*3]
                 );
-
 
     //if (true) {
     if(!mesh.is_border(vertexIndex)){ //not an edge we optimize the normals
@@ -157,7 +156,7 @@ void normal_integration::addResidualBlocks(Mesh &mesh, Problem *problem, uint ve
     }
 
     // regularization term with 4-neighborhood
-    CostFunction* ereg;
+    /*CostFunction* ereg;
     switch(gridNeighbors.size())
     {
     case 2:
@@ -196,7 +195,122 @@ void normal_integration::addResidualBlocks(Mesh &mesh, Problem *problem, uint ve
                     &vertices[gridNeighbors[3]*3]
                     );
         break;
-    }
+    }*/
+
+    //CostFunction* ereg;
+
+    switch(neighbors.size()){
+        case 2:
+        {
+
+            CostFunction* ereg = new AutoDiffCostFunction<CostFunctorEreg2Neighbors, 3, 3, 3, 3>(new CostFunctorEreg2Neighbors(laplacian, neighbors));
+            problem->AddResidualBlock(ereg, NULL,
+                                       &vertices[vertexIndex*3], // vertex
+                                       &vertices[neighbors[0]*3], // and the neighbors..
+                                       &vertices[neighbors[1]*3]);
+
+
+            break;
+            }
+
+        case 3:
+        {
+
+            CostFunction* ereg = new AutoDiffCostFunction<CostFunctorEreg3Neighbors, 3, 3, 3, 3, 3>(new CostFunctorEreg3Neighbors(laplacian, neighbors));
+            problem->AddResidualBlock(ereg, NULL,
+                                       &vertices[vertexIndex*3], // vertex
+                                       &vertices[neighbors[0]*3], // and the neighbors..
+                                       &vertices[neighbors[1]*3],
+                                       &vertices[neighbors[2]*3]);
+
+
+            break;
+            }
+
+        case 4:
+        {
+
+            CostFunction* ereg = new AutoDiffCostFunction<CostFunctorEreg4Neighbors, 3, 3, 3, 3, 3, 3>(new CostFunctorEreg4Neighbors(laplacian, neighbors));
+            problem->AddResidualBlock(ereg, NULL,
+                                       &vertices[vertexIndex*3], // vertex
+                                       &vertices[neighbors[0]*3], // and the neighbors..
+                                       &vertices[neighbors[1]*3],
+                                       &vertices[neighbors[2]*3],
+                                       &vertices[neighbors[3]*3]);
+
+
+            break;
+            }
+
+        case 5:
+        {
+            CostFunction* ereg = new AutoDiffCostFunction<CostFunctorEreg5Neighbors, 3, 3, 3, 3, 3, 3, 3>(new CostFunctorEreg5Neighbors(laplacian, neighbors));
+            problem->AddResidualBlock(ereg, NULL,
+                           &vertices[vertexIndex*3], // vertex
+                           &vertices[neighbors[0]*3], // and the neighbors..
+                           &vertices[neighbors[1]*3],
+                           &vertices[neighbors[2]*3],
+                           &vertices[neighbors[3]*3],
+                           &vertices[neighbors[4]*3]);
+
+
+
+            break;
+        }
+
+        case 6:
+        {
+            CostFunction* ereg = new AutoDiffCostFunction<CostFunctorEreg6Neighbors, 3, 3, 3, 3, 3, 3, 3, 3>(new CostFunctorEreg6Neighbors(laplacian, neighbors));
+            problem->AddResidualBlock( ereg, NULL,
+                       &vertices[vertexIndex*3], // vertex
+                       &vertices[neighbors[0]*3], // and the neighbors..
+                       &vertices[neighbors[1]*3],
+                       &vertices[neighbors[2]*3],
+                       &vertices[neighbors[3]*3],
+                       &vertices[neighbors[4]*3],
+                       &vertices[neighbors[5]*3]);
+
+
+
+            break;
+        }
+
+        case 7:
+        {
+            CostFunction* ereg = new AutoDiffCostFunction<CostFunctorEreg7Neighbors, 3, 3, 3, 3, 3, 3, 3, 3, 3>(new CostFunctorEreg7Neighbors(laplacian, neighbors));
+            problem->AddResidualBlock( ereg, NULL,
+                       &vertices[vertexIndex*3], // vertex
+                       &vertices[neighbors[0]*3], // and the neighbors..
+                       &vertices[neighbors[1]*3],
+                       &vertices[neighbors[2]*3],
+                       &vertices[neighbors[3]*3],
+                       &vertices[neighbors[4]*3],
+                       &vertices[neighbors[5]*3],
+                       &vertices[neighbors[6]*3]);
+
+
+            break;
+        }
+
+        case 8:
+        {
+            CostFunction* ereg = new AutoDiffCostFunction<CostFunctorEreg8Neighbors, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3>(new CostFunctorEreg8Neighbors(laplacian, neighbors));
+            problem->AddResidualBlock( ereg, NULL,
+                           &vertices[vertexIndex*3], // vertex
+                           &vertices[neighbors[0]*3], // and the neighbors..
+                           &vertices[neighbors[1]*3],
+                           &vertices[neighbors[2]*3],
+                           &vertices[neighbors[3]*3],
+                           &vertices[neighbors[4]*3],
+                           &vertices[neighbors[5]*3],
+                           &vertices[neighbors[6]*3],
+                           &vertices[neighbors[7]*3]);
+
+            break;
+
+        }//*/
+
+        } // switch end
 }
 
 /**
@@ -292,6 +406,8 @@ std::vector<std::vector<double>> normal_integration::calculate_vertex_normals(Me
 }
 
 void normal_integration::perform_normal_integration(Mesh &mesh, std::vector<std::vector<double>> &desired_normals) {
+    //mesh.calculate_vertex_laplacians();
+    
     // make a copy of the original positions of the vertices
     for (int i = 0; i < mesh.source_points.size(); i++) {
         x_sources.push_back(mesh.source_points[i]);
@@ -310,7 +426,7 @@ void normal_integration::perform_normal_integration(Mesh &mesh, std::vector<std:
     // iterate over all vertices and add the corresponding residual blocks
     for(uint i=0; i<mesh.source_points.size(); i++)
     {
-        addResidualBlocks(mesh, &prob, i, neighborsPerVertex[i], neighborMapPerVertex[i], eightNeighborsPerVertex[i], vertices, desired_normals[i]);
+        addResidualBlocks(mesh, &prob, i, neighborsPerVertex[i], neighborMapPerVertex[i], mesh.vertex_laplacians[i], vertices, desired_normals[i]);
     }
 
     Solver::Options options;

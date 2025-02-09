@@ -181,7 +181,7 @@ public:
                    const float green,
                    const float blue) const;
 
-    void draw_bounded_dual() const;
+    void draw_bounded_dual(std::string filename) const;
 
     void draw_movement() const;
     

@@ -27,7 +27,7 @@ struct HashPair {
 class Mesh {
     private:
         void generate_structured_mesh(int nx, int ny, double width, double height, std::vector<std::vector<unsigned int>> &triangles, std::vector<std::vector<double>> &points);
-        void generate_poked_mesh(int nx, int ny, double width, double height, std::vector<std::vector<int>> &triangles, std::vector<std::vector<double>> &points);
+        void generate_poked_mesh(int nx, int ny, double width, double height, std::vector<std::vector<unsigned int>> &triangles, std::vector<std::vector<double>> &points);
 
     public:
         Mesh(double width, double height, int res_x, int res_y);
@@ -38,6 +38,12 @@ class Mesh {
 
         std::unordered_map<int, std::vector<int>> vertex_to_triangles;
 
+        std::vector<std::vector<std::pair<int, int>>> vertex_adjecent_edges;
+        std::vector<std::vector<int>> vertex_adjecent_triangles;
+        std::vector<std::vector<int>> vertex_adjecent_vertices;
+        std::vector<bool> vertex_is_boundary;
+        std::vector<std::vector<double>> vertex_laplacians;
+
         std::vector<std::vector<double>> source_points;
 
         std::vector<std::vector<unsigned int>> triangles;
@@ -47,6 +53,12 @@ class Mesh {
 
         int res_x;
         int res_y;
+
+        void build_adjacency_lookups();
+        bool is_boundary_vertex(int vertex_index, std::vector<std::pair<int, int>>& boundary_edges);
+        void calculate_vertex_laplacians();
+
+        std::vector<double> compute_laplacian(int i);
 
         void build_source_bvh(int targetCellSize, int maxDepth);
 

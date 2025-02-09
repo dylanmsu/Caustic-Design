@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "/home/dylan/Documents/Caustic-Design/Caustic_Design",
+    "cmake.sourceDirectory": "/home/dylan/Documents/Caustic-Design/caustic_design_cli",
     "files.associations": {
         "ostream": "cpp",
         "iostream": "cpp",

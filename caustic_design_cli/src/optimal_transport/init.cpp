@@ -417,7 +417,7 @@ void export_cells_as_svg(std::vector<std::vector<Point>> &cells, std::vector<std
     svg_file.close();
 }
 
-void Scene::draw_bounded_dual() const
+void Scene::draw_bounded_dual(std::string filename) const
 {
     std::vector<std::vector<Point>> polygons;
     std::vector<std::vector<double>> colors;
@@ -445,7 +445,7 @@ void Scene::draw_bounded_dual() const
         colors.push_back({1, 1, 1});
     }
 
-    export_cells_as_svg(polygons, colors, "bounded_dual.svg");
+    export_cells_as_svg(polygons, colors, filename);
 }
 
 void Scene::draw_gradient()  const

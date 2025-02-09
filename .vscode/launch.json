@@ -10,8 +10,12 @@
             "request": "launch",
             "program": "${workspaceFolder}/caustic_design_cli/build/caustic_design", // Path to your compiled executable
             "args": [
-                "--source_png=/home/dylan/Documents/Caustic-Design/caustic_design_cli/img/initial_distrib.png",
-                "--target_png=/home/dylan/Documents/Caustic-Design/caustic_design_cli/img/lena.png"
+                "--source_png=/home/dylan/Documents/Caustic-Design/caustic_design_cli/img/source2.png",
+                "--target_png=/home/dylan/Documents/Caustic-Design/caustic_design_cli/img/source2.png",
+                "--n_sites=1000",
+                "--n_levels=6",
+                "--mesh_res=100",
+                "--focal_l=1"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}", // Working directory

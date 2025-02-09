@@ -134,9 +134,9 @@ public:
     
     double get_value(unsigned i, unsigned j, const bool normalized = false) const
     {
-        double r = m_image(j, i, 0) / 255.0; // Normalize R component
-        double g = m_image(j, i, 1) / 255.0; // Normalize G component
-        double b = m_image(j, i, 2) / 255.0; // Normalize B component
+        double r = m_image(i, get_height() - j, 0) / 255.0; // Normalize R component
+        double g = m_image(i, get_height() - j, 1) / 255.0; // Normalize G component
+        double b = m_image(i, get_height() - j, 2) / 255.0; // Normalize B component
         double value = (0.299 * r) + (0.587 * g) + (0.114 * b); // Calculate grayscale value using luminosity method
 
         if (m_invert) value = get_max_value() - value;

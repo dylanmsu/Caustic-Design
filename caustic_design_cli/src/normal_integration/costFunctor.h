@@ -22,7 +22,7 @@ template<typename T> void normalize(T* v);
 template<typename T> T evaluateInt(const T* const vertex, const T** neighbors, uint nNeighbors, const vector<int> & neighborMap, const std::vector<double> &desiredNormal, T* result);
 template<typename T> T evaluateInt2(const T* const vertex, const T** neighbors, uint nNeighbors, const vector<int> & neighborMap, const std::vector<double> &desiredNormal, T* result);
 template<typename T> void calcVertexNormal(const T* vertex, std::vector<T> &result, const T** neighbors, const std::vector<int>& neighborMap);
-template<typename T> T evaluateReg(const T** const allVertices, const float* L, uint nVertices);
+//template<typename T> T evaluateReg(const T** const allVertices, const float* L, uint nVertices);
 
 
 /******************************************************/
@@ -189,13 +189,13 @@ void calcVertexNormal(const T* vertex, std::vector<T> &result, const T** neighbo
 }
 
 // For EReg
-template<typename T> void evaluateReg(const T** const allVertices, uint nVertices, T* res)
+template<typename T> void evaluateReg(const T** const allVertices, uint nVertices, std::vector<double> &laplacian, std::vector<int> &neigbors, T* res)
 {
-    float *L = new float[nVertices];
-    L[0] = - float(nVertices - 1);
-    for (uint i=1; i<nVertices; i++)
+    double lapalcian_sum = 0.0f;
+
+    for (uint i=0; i<laplacian.size(); i++)
     {
-        L[i] = 1;
+        lapalcian_sum += laplacian[i];
     }
 
     for (uint i=0; i<3; i++) {
@@ -204,10 +204,12 @@ template<typename T> void evaluateReg(const T** const allVertices, uint nVertice
 
     for(uint i=0; i<nVertices; i++)
     {
-        res[2] += T(L[i]) * allVertices[i][2] * T(EREG_WEIGHT);
+        if (i==0) {
+            res[2] += T(-lapalcian_sum) * allVertices[i][2] * T(EREG_WEIGHT);
+        } else {
+            res[2] += T(laplacian[i - 1]) * allVertices[i][2] * T(EREG_WEIGHT);
+        }
     }
-
-    delete L;
 }
 
 
@@ -461,10 +463,160 @@ private:
 
 /********* EReg *********/
 
+class CostFunctorEreg8Neighbors{
+public:
+    CostFunctorEreg8Neighbors(std::vector<double> &laplacian, vector<int> &neighbors) : laplacian(laplacian), neighbors(neighbors)
+    {
+
+    }
+
+    template <typename T> bool operator()(const T* const vertex,
+                                          const T* const neighbor1,
+                                          const T* const neighbor2,
+                                          const T* const neighbor3,
+                                          const T* const neighbor4,
+                                          const T* const neighbor5,
+                                          const T* const neighbor6,
+                                          const T* const neighbor7,
+                                          const T* const neighbor8,
+                                          T* residual) const
+    {
+
+        const T* allVertices[9];
+        allVertices[0] = vertex;
+        allVertices[1] = neighbor1;
+        allVertices[2] = neighbor2;
+        allVertices[3] = neighbor3;
+        allVertices[4] = neighbor4;
+        allVertices[5] = neighbor5;
+        allVertices[6] = neighbor6;
+        allVertices[7] = neighbor7;
+        allVertices[8] = neighbor8;
+
+
+        evaluateReg(allVertices, 9, laplacian, neighbors, residual);
+
+        return true;
+    }
+private:
+    std::vector<double> &laplacian;
+    vector<int> &neighbors;
+};
+
+class CostFunctorEreg7Neighbors{
+public:
+    CostFunctorEreg7Neighbors(std::vector<double> &laplacian, vector<int> &neighbors) : laplacian(laplacian), neighbors(neighbors)
+    {
+
+    }
+
+    template <typename T> bool operator()(const T* const vertex,
+                                          const T* const neighbor1,
+                                          const T* const neighbor2,
+                                          const T* const neighbor3,
+                                          const T* const neighbor4,
+                                          const T* const neighbor5,
+                                          const T* const neighbor6,
+                                          const T* const neighbor7,
+                                          T* residual) const
+    {
+
+        const T* allVertices[8];
+        allVertices[0] = vertex;
+        allVertices[1] = neighbor1;
+        allVertices[2] = neighbor2;
+        allVertices[3] = neighbor3;
+        allVertices[4] = neighbor4;
+        allVertices[5] = neighbor5;
+        allVertices[6] = neighbor6;
+        allVertices[7] = neighbor7;
+
+
+        evaluateReg(allVertices, 8, laplacian, neighbors, residual);
+
+        return true;
+    }
+private:
+    std::vector<double> &laplacian;
+    vector<int> &neighbors;
+};
+
+class CostFunctorEreg6Neighbors{
+public:
+    CostFunctorEreg6Neighbors(std::vector<double> &laplacian, vector<int> &neighbors) : laplacian(laplacian), neighbors(neighbors)
+    {
+
+    }
+
+    template <typename T> bool operator()(const T* const vertex,
+                                          const T* const neighbor1,
+                                          const T* const neighbor2,
+                                          const T* const neighbor3,
+                                          const T* const neighbor4,
+                                          const T* const neighbor5,
+                                          const T* const neighbor6,
+                                          T* residual) const
+    {
+
+        const T* allVertices[7];
+        allVertices[0] = vertex;
+        allVertices[1] = neighbor1;
+        allVertices[2] = neighbor2;
+        allVertices[3] = neighbor3;
+        allVertices[4] = neighbor4;
+        allVertices[5] = neighbor5;
+        allVertices[6] = neighbor6;
+
+
+        evaluateReg(allVertices, 7, laplacian, neighbors, residual);
+
+        return true;
+    }
+private:
+    std::vector<double> &laplacian;
+    vector<int> &neighbors;
+};
+
+class CostFunctorEreg5Neighbors{
+public:
+    CostFunctorEreg5Neighbors(std::vector<double> &laplacian, vector<int> &neighbors) : laplacian(laplacian), neighbors(neighbors)
+    {
+
+    }
+
+    template <typename T> bool operator()(const T* const vertex,
+                                          const T* const neighbor1,
+                                          const T* const neighbor2,
+                                          const T* const neighbor3,
+                                          const T* const neighbor4,
+                                          const T* const neighbor5,
+                                          T* residual) const
+    {
+
+        const T* allVertices[6];
+        allVertices[0] = vertex;
+        allVertices[1] = neighbor1;
+        allVertices[2] = neighbor2;
+        allVertices[3] = neighbor3;
+        allVertices[4] = neighbor4;
+        allVertices[5] = neighbor5;
+
+
+        evaluateReg(allVertices, 6, laplacian, neighbors, residual);
+
+        return true;
+    }
+private:
+    std::vector<double> &laplacian;
+    vector<int> &neighbors;
+};
 
 class CostFunctorEreg4Neighbors{
 public:
-    CostFunctorEreg4Neighbors(){}
+    CostFunctorEreg4Neighbors(std::vector<double> &laplacian, vector<int> &neighbors) : laplacian(laplacian), neighbors(neighbors)
+    {
+
+    }
 
     template <typename T> bool operator()(const T* const vertex,
                                           const T* const neighbor1,
@@ -482,16 +634,22 @@ public:
         allVertices[4] = neighbor4;
 
 
-        evaluateReg(allVertices, 5, residual);
+        evaluateReg(allVertices, 5, laplacian, neighbors, residual);
 
         return true;
     }
+private:
+    std::vector<double> &laplacian;
+    vector<int> &neighbors;
 };
 
 
 class CostFunctorEreg3Neighbors{
 public:
-    CostFunctorEreg3Neighbors(){}
+    CostFunctorEreg3Neighbors(std::vector<double> &laplacian, vector<int> &neighbors) : laplacian(laplacian), neighbors(neighbors)
+    {
+
+    }
 
     template <typename T> bool operator()(const T* const vertex,
                                           const T* const neighbor1,
@@ -507,16 +665,22 @@ public:
         allVertices[3] = neighbor3;
 
 
-        evaluateReg(allVertices, 4, residual);
+        evaluateReg(allVertices, 4, laplacian, neighbors, residual);
 
         return true;
     }
+private:
+    std::vector<double> &laplacian;
+    vector<int> &neighbors;
 };
 
 
 class CostFunctorEreg2Neighbors{
 public:
-    CostFunctorEreg2Neighbors(){}
+    CostFunctorEreg2Neighbors(std::vector<double> &laplacian, vector<int> &neighbors) : laplacian(laplacian), neighbors(neighbors)
+    {
+
+    }
 
     template <typename T> bool operator()(const T* const vertex,
                                           const T* const neighbor1,
@@ -530,10 +694,13 @@ public:
         allVertices[2] = neighbor2;
 
 
-        evaluateReg(allVertices, 3, residual);
+        evaluateReg(allVertices, 3, laplacian, neighbors, residual);
 
         return true;
     }
+private:
+    std::vector<double> &laplacian;
+    vector<int> &neighbors;
 };
 
 /********* EBar *********/

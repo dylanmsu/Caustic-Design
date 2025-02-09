@@ -112,6 +112,10 @@ void OptimalTransport::runOptimalTransport(bool gradient_descent)
             printf("  fx = %f, x[0] = %f, x[1] = %f\n", fx, x[0], x[1]);
             lbfgs_free(x);
 
+            char str[32];
+            sprintf(str, "power_diagram_level_%d.svg", current_level);
+            scaled_scenes[current_level]->draw_bounded_dual(str);
+
 
             std::cout << "done" << std::endl;
         }
@@ -330,8 +334,6 @@ lbfgsfloatval_t OptimalTransport::evaluate(
 //    win->update();
 //#endif
 
-    scaled_scenes[current_level]->draw_bounded_dual();
-
     //std::cout << "integrated sum = " << integral_sum << std::endl;
     //std::cout << "source_sum = " << source_sum << std::endl;
 
@@ -437,6 +439,10 @@ bool OptimalTransport::prepare_data()
 
         generate_voronoi(scaled_scenes[i], scene_sites, EPSILON);
 
+        char str[32];
+        sprintf(str, "voronoi_diagram_level_%d.svg", i);
+        scaled_scenes[i]->draw_bounded_dual(str);
+
         //scaled_scenes[i]->draw_bounded_dual();
 
         //init_points(scene_sites, scaled_scenes[i]);
@@ -529,8 +535,6 @@ bool OptimalTransport::generate_voronoi(Scene *sc, unsigned npoints, double epsi
         }
 
         std::cout << "iteration = " << iter << ", norm = " << norm << std::endl;
-
-        scaled_scenes[current_level]->draw_bounded_dual();
     }
 
     std::cout << std::endl;
@@ -660,7 +664,14 @@ FT OptimalTransport::get_initial_weight(Point point, Scene *scene)
 
 unsigned OptimalTransport::get_level_sites(unsigned level)
 {
-    return site_amount / pow(5, level);
+    int sites = site_amount / pow(5, level);
+
+    if (sites < 10) {
+        return 10;
+    } else {
+        return sites;
+    }
+    
     //return m_scene->getVertices().size() / pow(5, level);
 }
 

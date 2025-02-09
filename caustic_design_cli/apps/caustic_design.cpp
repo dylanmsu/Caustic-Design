@@ -222,177 +222,24 @@ void rotatePoints(std::vector<std::vector<double>>& trg_pts, std::vector<double>
     }
 }
 
-std::vector<double> cross(std::vector<double> v1, std::vector<double> v2){
-  std::vector<double> result(3);
-  result[0] = v1[1]*v2[2] - v1[2]*v2[1];
-  result[1] = v1[2]*v2[0] - v1[0]*v2[2];
-  result[2] = v1[0]*v2[1] - v1[1]*v2[0];
-  return result;
-}
-
-double dot(std::vector<double> a, std::vector<double> b) {
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-}
-
-std::vector<double> mult(double a, std::vector<double> b) {
-  return {a*b[0], a*b[1], a*b[2]};
-}
-
-std::vector<double> add(std::vector<double> a, std::vector<double> b) {
-  return {a[0] + b[0], a[1] + b[1], a[2] + b[2]};
-}
-
-std::vector<double> sub(std::vector<double> a, std::vector<double> b) {
-  return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
-}
-
-double magnitude(std::vector<double> a) {
-  return std::sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
-}
-
-double cot(const std::vector<double>& a, const std::vector<double>& b) {
-    auto cross_product = cross(a, b);
-    double cross_magnitude = magnitude(cross_product);
-
-    if (cross_magnitude < 1e-12) {
-        //throw std::invalid_argument("Vectors are parallel or one is a zero vector, cotangent undefined.");
-        cross_magnitude = 1e-12;
+std::vector<double> normalize_vec(std::vector<double> p1) {
+    std::vector<double> vec(3);
+    double squared_len = 0;
+    for (int i=0; i<p1.size(); i++) {
+        squared_len += p1[i] * p1[i];
     }
 
-    return dot(a, b) / cross_magnitude;
-}
+    double len = std::sqrt(squared_len);
 
-bool is_boundary_vertex(Mesh &mesh, std::vector<std::pair<int, int>> &adjacent_edges, std::vector<int> &adjacent_triangles, int vertex_index, std::vector<std::pair<int, int>>& boundary_edges) {
-    std::unordered_map<std::pair<int, int>, int, HashPair> edge_triangle_count;
-    for (int triangle_index : adjacent_triangles) {
-        const std::vector<unsigned int>& triangle = mesh.triangles[triangle_index];
-        for (int j = 0; j < 3; ++j) {
-            int v1 = triangle[j];
-            int v2 = triangle[(j + 1) % 3];
-            std::pair<int, int> edge = std::make_pair(std::min(v1, v2), std::max(v1, v2));
-            edge_triangle_count[edge]++;
-        }
+    for (int i=0; i<p1.size(); i++) {
+        vec[i] = p1[i] / len;
     }
 
-    bool is_boundary = false;
-    for (const auto& edge : adjacent_edges) {
-        if (edge_triangle_count[edge] == 1) { // Boundary edge
-            boundary_edges.push_back(edge);
-            is_boundary = true;
-        }
-    }
-
-    return is_boundary;
-}
-
-void project_onto_boundary(std::vector<double> &point) {
-  point[0] -= 0.5;
-  point[1] -= 0.5;
-
-  double dist = sqrt(pow(point[0], 2) + pow(point[1], 2))*2;
-
-  point[0] /= dist;
-  point[1] /= dist;
-
-  point[0] += 0.5;
-  point[1] += 0.5;
-}
-
-std::vector<double> compute_laplacian(Mesh &mesh, std::vector<int> adjacent_triangles, std::vector<int> neighboring_vertices, int i) {
-    std::vector<double> laplacian(neighboring_vertices.size(), 0.0f);
-
-    for (int j_index = 0; j_index < neighboring_vertices.size(); ++j_index) {
-        int j = neighboring_vertices[j_index];
-
-        // Find triangles shared between `i` and `j`
-        std::vector<int> shared_triangles;
-        for (int triangle : adjacent_triangles) {
-          // Check if `j` is one of the vertices in this triangle
-          const auto& vertices = mesh.triangles[triangle];
-          if (std::find(vertices.begin(), vertices.end(), j) != vertices.end()) {
-              shared_triangles.push_back(triangle);
-          }
-        }
-
-        // Handle cases based on the number of shared triangles
-        if (shared_triangles.size() == 2) {
-            // Interior case: Two triangles are connected
-            std::vector<int> k_vertices;
-            for (int triangle : shared_triangles) {
-                for (int vertex : mesh.triangles[triangle]) {
-                    if (vertex != i && vertex != j) {
-                        k_vertices.push_back(vertex);
-                        break; // Only one `k` per triangle
-                    }
-                }
-            }
-
-            // Ensure we found two `k` vertices
-            if (k_vertices.size() != 2) {
-                throw std::runtime_error("Error identifying k vertices in triangles.");
-            }
-
-            int k1 = k_vertices[0];
-            int k2 = k_vertices[1];
-
-            std::vector<double> edge1;
-            std::vector<double> edge2;
-
-            edge1 = sub(mesh.source_points[k1], mesh.source_points[j]);
-            edge2 = sub(mesh.source_points[k1], mesh.source_points[i]);
-            double cot_k1 = cot(edge1, edge2);
-
-            edge1 = sub(mesh.source_points[k2], mesh.source_points[j]);
-            edge2 = sub(mesh.source_points[k2], mesh.source_points[i]);
-            double cot_k2 = cot(edge1, edge2);
-
-            laplacian[j_index] += cot_k1;
-            laplacian[j_index] += cot_k2;
-
-            //std::cout << "k1=" << k1 << ", k2=" << k2 << std::endl;
-
-        } else if (shared_triangles.size() == 1) {
-            // Boundary case: Only one triangle is connected
-            int triangle = shared_triangles[0];
-            int k = -1;
-
-            // Find the single `k` vertex
-            for (int vertex : mesh.triangles[triangle]) {
-                if (vertex != i && vertex != j) {
-                    k = vertex;
-                    break;
-                }
-            }
-
-            if (k == -1) {
-                throw std::runtime_error("Error identifying k vertex in boundary triangle.");
-            }
-
-            std::vector<double> edge1;
-            std::vector<double> edge2;
-
-            edge1 = sub(mesh.source_points[k], mesh.source_points[j]);
-            edge2 = sub(mesh.source_points[k], mesh.source_points[i]);
-            double cot_k = cot(edge1, edge2);
-
-            laplacian[j_index] += cot_k;
-
-            //std::cout << "k=" << k << std::endl;
-
-        } else {
-            throw std::runtime_error("No shared triangles between i and j; invalid mesh or disconnected vertex.");
-        }
-    }
-
-    return laplacian;
+    return vec;
 }
 
 //compute the desired normals
-std::vector<std::vector<double>> fresnelMapping(
-  std::vector<std::vector<double>> &vertices, 
-  std::vector<std::vector<double>> &target_pts, 
-  double refractive_index
-) {
+std::vector<std::vector<double>> fresnelMapping(std::vector<std::vector<double>> &vertices, std::vector<std::vector<double>> &target_pts, double refractive_index) {
     std::vector<std::vector<double>> desiredNormals;
 
     //double boundary_z = -0.1;
@@ -402,10 +249,10 @@ std::vector<std::vector<double>> fresnelMapping(
     bool use_point_src = false;
     bool use_reflective_caustics = false;
 
-    std::vector<double> pointLightPosition(3);
-    pointLightPosition[0] = 0.5;
-    pointLightPosition[1] = 0.5;
-    pointLightPosition[2] = 0.5;
+    //std::vector<double> pointLightPosition(3);
+    //pointLightPosition[0] = 0.5;
+    //pointLightPosition[1] = 0.5;
+    //pointLightPosition[2] = 0.5;
 
     // place initial points on the refractive surface where the light rays enter the material
     /*if (use_point_src && !use_reflective_caustics) {
@@ -448,31 +295,31 @@ std::vector<std::vector<double>> fresnelMapping(
             target_pts[i][2] - vertices[i][2]
         };
 
-        if (use_point_src) {
+        /*if (use_point_src) {
             incidentLight[0] = vertices[i][0] - pointLightPosition[0];
             incidentLight[1] = vertices[i][1] - pointLightPosition[1];
             incidentLight[2] = vertices[i][2] - pointLightPosition[2];
-        } else {
+        } else {*/
             incidentLight[0] = 0;
             incidentLight[1] = 0;
             incidentLight[2] = -1;
-        }
+        //}
 
-        //transmitted = normalize_vec(transmitted);
-        //incidentLight = normalize_vec(incidentLight);
+        transmitted = normalize_vec(transmitted);
+        incidentLight = normalize_vec(incidentLight);
 
         std::vector<double> normal(3);
-        if (use_reflective_caustics) {
+        /*if (use_reflective_caustics) {
             normal[0] = ((transmitted[0]) - incidentLight[0]) * 1.0f;
             normal[1] = ((transmitted[1]) - incidentLight[1]) * 1.0f;
             normal[2] = ((transmitted[2]) - incidentLight[2]) * 1.0f;
-        } else {
+        } else {*/
             normal[0] = ((transmitted[0]) - (incidentLight[0]) * refractive_index) * -1.0f;
             normal[1] = ((transmitted[1]) - (incidentLight[1]) * refractive_index) * -1.0f;
             normal[2] = ((transmitted[2]) - (incidentLight[2]) * refractive_index) * -1.0f;
-        }
+        //}
 
-        //normal = normalize_vec(normal);
+        normal = normalize_vec(normal);
 
         desiredNormals.push_back(normal);
     }
@@ -529,17 +376,15 @@ std::unordered_map<std::string, std::string> parse_arguments(int argc, char cons
 }
 
 // interpolate target mesh into a rectangular grid
-std::vector<double> interpolate_raster_source(Mesh *mesh, std::vector<std::vector<double>>& positions, std::vector<double> &point, bool &triangle_miss) {
-    mesh->build_source_bvh(5, 30);
-    
+std::vector<double> interpolate_point(Mesh &mesh, std::vector<std::vector<double>>& positions, std::vector<double> &point, bool &triangle_miss) {
     Hit hit;
     bool intersection = false;
-    mesh->source_bvh->query(point, hit, intersection);
+    mesh.source_bvh->query(point, hit, intersection);
     if (intersection) {
-        double interpolation_x = positions[mesh->triangles[hit.face_id][0]][0]*hit.barycentric_coords[0] + positions[mesh->triangles[hit.face_id][1]][0]*hit.barycentric_coords[1] + positions[mesh->triangles[hit.face_id][2]][0]*hit.barycentric_coords[2];
-        double interpolation_y = positions[mesh->triangles[hit.face_id][0]][1]*hit.barycentric_coords[0] + positions[mesh->triangles[hit.face_id][1]][1]*hit.barycentric_coords[1] + positions[mesh->triangles[hit.face_id][2]][1]*hit.barycentric_coords[2];
+        double interpolation_x = positions[mesh.triangles[hit.face_id][0]][0]*hit.barycentric_coords[0] + positions[mesh.triangles[hit.face_id][1]][0]*hit.barycentric_coords[1] + positions[mesh.triangles[hit.face_id][2]][0]*hit.barycentric_coords[2];
+        double interpolation_y = positions[mesh.triangles[hit.face_id][0]][1]*hit.barycentric_coords[0] + positions[mesh.triangles[hit.face_id][1]][1]*hit.barycentric_coords[1] + positions[mesh.triangles[hit.face_id][2]][1]*hit.barycentric_coords[2];
         triangle_miss = false;
-        return {interpolation_x, interpolation_y};
+        return {interpolation_x, interpolation_y, 0.0f};
     } else {
         printf("interpolation miss!\r\n");
         printf("x: %f, y: %f\r\n", point[0], point[1]);
@@ -582,31 +427,47 @@ std::vector<double> calculate_centroid_vector(std::vector<Point> vertices) {
 
 int main(int argc, char const *argv[])
 {
-  setlocale(LC_ALL,"C");
+    setlocale(LC_ALL,"C");
 
     // Parse user arguments
     std::unordered_map<std::string, std::string> args = parse_arguments(argc, argv);
 
-  std::vector<Eigen::Vector2d> vertex_positions;
-  normal_integration normal_int;
+    std::vector<Eigen::Vector2d> vertex_positions;
+    normal_integration normal_int;
 
-  Scene* source_scene;
-  source_scene = new Scene;
-  source_scene->load_image(args["source_png"].c_str());
+    int mesh_res = 100;
+    int n_sites = 10000;
+    int n_levels = 4;
+    float focal_l = 1.5 / 5;
+    std::string source_image_filename = "";
+    std::string target_image_filename = "";
 
-  Scene* m_scene;
-  m_scene = new Scene;
-  m_scene->load_image(args["target_png"].c_str());
+    n_sites = std::stoi(args["n_sites"]);
+    n_levels = std::stoi(args["n_levels"]);
+    mesh_res = std::stoi(args["mesh_res"]);
+    focal_l = std::stod(args["focal_l"]) / 5;
+    source_image_filename = args["source_png"].c_str();
+    target_image_filename = args["target_png"].c_str();
 
-  //Mesh mesh(1.0, 1.0/2, opts.resolution, (int)(opts.resolution/2));
-  Mesh mesh(1.0, 1.0, 100, 100);
-  
-  mesh.build_vertex_to_triangles();
+    Scene* source_scene;
+    source_scene = new Scene;
+    source_scene->load_image(source_image_filename);
 
-  normal_int.initialize_data(mesh);
-  
-  OptimalTransport ot = OptimalTransport(m_scene, source_scene, 4, 5000);
-  ot.runOptimalTransport(false);
+    Scene* m_scene;
+    m_scene = new Scene;
+    m_scene->load_image(target_image_filename);
+
+    //Mesh mesh(1.0, 1.0/2, opts.resolution, (int)(opts.resolution/2));
+    Mesh mesh(1.0, 1.0, mesh_res, mesh_res);
+    
+    mesh.build_vertex_to_triangles();
+
+    mesh.calculate_vertex_laplacians();
+
+    normal_int.initialize_data(mesh);
+    
+    OptimalTransport ot = OptimalTransport(m_scene, source_scene, n_levels, n_sites);
+    ot.runOptimalTransport(false);
 
     std::vector<std::vector<double>> points;
     std::vector<std::vector<double>> pd_centroids;
@@ -643,113 +504,40 @@ int main(int argc, char const *argv[])
         pd_centroids[i][1] += 0.5;
     }
 
-    printf("test\r\n");
-
     Mesh interpolation_mesh(points, triangles);
 
-    printf("test2\r\n");
-
+    interpolation_mesh.build_source_bvh(5, 30);
     for (int i = 0; i < mesh.source_points.size(); i++)
     {
         bool triangle_miss = false;
-        target_points.push_back(interpolate_raster_source(&interpolation_mesh, pd_centroids, mesh.source_points[i], triangle_miss));
+        target_points.push_back(interpolate_point(interpolation_mesh, pd_centroids, mesh.source_points[i], triangle_miss));
+        target_points[i].push_back(0.0f);
+    }
+  
+    //export_grid_to_svg(mesh.source_points, 1, 1, opts.resolution, opts.resolution, "../grid.svg", 0.5);
+
+    //scaleAndTranslatePoints(mesh.source_points, 1.0, 1.0, 1.0 / 100);
+    
+    for (int i=0; i<mesh.source_points.size(); i++)
+    {
+        Eigen::Vector2d point = {mesh.source_points[i][0], mesh.source_points[i][1]};
+        vertex_positions.push_back(point);
     }
 
-    printf("testt\r\n");
-  
-  //export_grid_to_svg(mesh.source_points, 1, 1, opts.resolution, opts.resolution, "../grid.svg", 0.5);
+    //export_grid_to_svg(trg_pts, 1, 0.5, opts.resolution, opts.resolution, "../grid.svg", 0.5);
 
-  scaleAndTranslatePoints(mesh.source_points, 1.0, 1.0, 1.0 / 100);
-  
-  for (int i=0; i<mesh.source_points.size(); i++)
-  {
-    Eigen::Vector2d point = {mesh.source_points[i][0], mesh.source_points[i][1]};
-    vertex_positions.push_back(point);
-  }
+    std::vector<std::vector<double>> desired_normals;
 
-  printf("testtt\r\n");
+    //scalePoints(trg_pts, {8, 8, 0}, {0.5, 0.5, 0});
+    rotatePoints(target_points, {0, 0, 0});
+    translatePoints(target_points, {0, 0, focal_l});
 
-  //export_grid_to_svg(trg_pts, 1, 0.5, opts.resolution, opts.resolution, "../grid.svg", 0.5);
+    for (int i=0; i<10; i++)
+    {
+        std::vector<std::vector<double>> normals = fresnelMapping(mesh.source_points, target_points, 1.49);
 
-  std::vector<std::vector<double>> desired_normals;
+        normal_int.perform_normal_integration(mesh, normals);
+    }
 
-  //scalePoints(trg_pts, {8, 8, 0}, {0.5, 0.5, 0});
-  rotatePoints(target_points, {0, 0, 0});
-  translatePoints(target_points, {0, 0, 1.5});
-
-  double r = 1.55;
-
-  printf("testttt\r\n");
-
-  for (int i=0; i<10; i++)
-  {
-      double max_z = -10000;
-
-      for (int j = 0; j < mesh.source_points.size(); j++) {
-        if (max_z < mesh.source_points[j][2]) {
-          max_z = mesh.source_points[j][2];
-        }
-      }
-
-      for (int j = 0; j < mesh.source_points.size(); j++) {
-          mesh.source_points[j][2] -= max_z;
-      }
-      
-
-      std::vector<std::vector<double>> normals = fresnelMapping(mesh.source_points, target_points, r);
-
-      normal_int.perform_normal_integration(mesh, normals);
-
-      printf("testtttt\r\n");
-
-      //std::vector<std::vector<double>> vertex_normals = normal_int.calculate_vertex_normals(mesh);
-
-      //std::vector<double> incidentLight(3);
-      //incidentLight[0] = 0;
-      //incidentLight[1] = 0;
-      //incidentLight[2] = -1;
-
-      //std::vector<int32_t> plane_triangle = mesh.triangles[0];
-
-      //std::vector<double> plane_normal = calc_plane_normal(trg_pts[plane_triangle[0]], trg_pts[plane_triangle[0]], trg_pts[plane_triangle[0]]);
-
-      //std::vector<std::vector<double>> intersections(vertex_normals.size());
-
-      /*std::vector<double> pointLightPosition(3);
-      pointLightPosition[0] = 0.5;
-      pointLightPosition[1] = 0.5;
-      pointLightPosition[2] = 0.5;
-
-      for (int i = 0; i < vertex_normals.size(); i++)
-      {
-        vertex_normals[i][0] *= -1.0;
-        vertex_normals[i][1] *= -1.0;
-        vertex_normals[i][2] *= -1.0;
-
-        std::vector<double> incidentLight(3);
-        incidentLight[0] = mesh.source_points[i][0] - pointLightPosition[0];
-        incidentLight[1] = mesh.source_points[i][1] - pointLightPosition[1];
-        incidentLight[2] = mesh.source_points[i][2] - pointLightPosition[2];
-
-        std::vector<double> intersectionPoint(3);
-        std::vector<double> refracted = refract(vertex_normals[i], incidentLight, r, 1.0);
-
-        refracted[0] /= -(refracted[2] + mesh.source_points[i][2]);
-        refracted[1] /= -(refracted[2] + mesh.source_points[i][2]);
-        refracted[2] /= -(refracted[2] + mesh.source_points[i][2]);
-
-        refracted[0] += mesh.source_points[i][0];
-        refracted[1] += mesh.source_points[i][1];
-        refracted[2] += mesh.source_points[i][2];
-
-        intersections[i] = refracted;
-      }*/
-
-      //export_triangles_to_svg(intersections, mesh.triangles, 1, 1, opts.resolution, opts.resolution, "../triangles.svg", 0.5);
-      //export_grid_to_svg(intersections, 1, 1, opts.resolution, opts.resolution, "../intersections.svg", 0.5);
-
-      //mesh.save_solid_obj_source(0.4, "../output.obj");
-  }
-
-  mesh.save_solid_obj_source(0.2, "../output.obj");
+    mesh.save_solid_obj_source(0.2, "output.obj");
 }
